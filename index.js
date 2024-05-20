@@ -1,4 +1,4 @@
-// require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const app = express();
@@ -51,7 +51,7 @@ app.get("/get-access", async (req, res, next) => {
   const queryString = await import("query-string");
   const code = queryString.default.parse(queryURL.query).code;
   const tokens = await oAuth2Client.getToken(code);
-  console.log("token: ", tokens.tokens.access_token);
+  //console.log("token: ", tokens.tokens.access_token);
   // res.json({ token: tokens.access_token });
   // res.send("hello chary");
   let bucket = [];
@@ -102,7 +102,7 @@ app.get("/get-access", async (req, res, next) => {
                 for(const stepsobj of values.value)
                   {
                     let stepCount = stepsobj.intVal
-                    console.log(stepCount);
+                    console.log(`Step_Count is : ${stepCount}`);
                     if(stepCount >= 7500)
                       {
                         res.send(`Yes!! Congratulations.... You have completed your target for today with step count of ${stepCount}. You can try uptil 23:59 (today) if you did not reach your target. `)
