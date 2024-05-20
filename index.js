@@ -26,6 +26,7 @@ app.use(bodyParser.json());
 const oAuth2Client = new google.auth.OAuth2(
   "42275004697-38am05ecrl4ipenhrn7b5l40rutp19qh.apps.googleusercontent.com",
   "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",
+  // "http://localhost:3000/get-access"
   "https://google-fit.onrender.com/get-access"
 );
 const scopes = [
@@ -73,7 +74,7 @@ app.get("/get-access", async (req, res, next) => {
           durationMillis: 24 * 60 * 60 * 1000
         },
         endTimeMillis: Date.now(),
-        startTimeMillis: Date.now() - 1 * 24 * 60 * 60 * 1000
+        startTimeMillis: Date.now() - 24 * 60 * 60 * 1000
       })
     });
 
