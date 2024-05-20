@@ -110,7 +110,7 @@ app.get("/get-access", async (req, res, next) => {
                       }
                     else
                     {
-                      res.send(`Your step count today is ${stepCount}. You can try uptil 23:59 (today) to reach your target. `)
+                      res.send(`Your step count today is ${stepCount}. You can try uptil 23:59 (today) to reach your target.`)
                     }
                   }
               }
