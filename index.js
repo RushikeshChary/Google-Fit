@@ -101,13 +101,17 @@ app.get("/get-access", async (req, res, next) => {
                 // console.log(values.value);
                 for(const stepsobj of values.value)
                   {
+                    //This is the step count.
                     let stepCount = stepsobj.intVal
                     console.log(stepCount);
                     if(stepCount >= 7500)
                       {
                         res.send(`Yes!! Congratulations.... You have completed your target for today with step count of ${stepCount}. You can try uptil 23:59 (today) if you did not reach your target. `)
                       }
-                    //This is the step count.
+                    else
+                    {
+                      res.send(`Your step count today is ${stepCount}. You can try uptil 23:59 (today) to reach your target. `)
+                    }
                   }
               }
           }
