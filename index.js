@@ -57,6 +57,18 @@ app.get("/get-access", async (req, res, next) => {
   // res.send("hello chary");
   let bucket = [];
   try {
+    const now = new Date();
+    const istOffsetMillis = 5.5 * 60 * 60 * 1000;
+    const oneDayMillis = 24 * 60 * 60 * 1000;
+  
+    // Calculate midnight in IST for the current day
+    const midnightIST = new Date(now.getTime() + istOffsetMillis);
+    midnightIST.setUTCHours(0, 0, 0, 0);
+    const startTimeMillis = midnightIST.getTime() - istOffsetMillis;
+  
+    // Current time in milliseconds (already in IST)
+    const endTimeMillis = now.getTime();
+  
     const response = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
       method: 'POST',
       headers: {
@@ -71,24 +83,77 @@ app.get("/get-access", async (req, res, next) => {
           }
         ],
         bucketByTime: {
-          durationMillis: 24 * 60 * 60 * 1000
+          durationMillis: oneDayMillis
         },
-        endTimeMillis: Date.now(),
-        startTimeMillis: Date.now() - 24 * 60 * 60 * 1000
+        startTimeMillis: startTimeMillis,
+        endTimeMillis: endTimeMillis
       })
     });
-
+  
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`Request failed with status ${response.status}: ${errorData.error.message}`);
     }
-
+  
     const result = await response.json();
     bucket = result.bucket;
-    // console.log(result);
+  
+    // Parse and log the step count data
+    // let totalSteps = 0;
+    // if (bucket && bucket.length > 0) {
+    //   bucket.forEach(b => {
+    //     b.dataset.forEach(dataset => {
+    //       dataset.point.forEach(point => {
+    //         if (point.value && point.value.length > 0) {
+    //           totalSteps += point.value[0].intVal || 0;
+    //         }
+    //       });
+    //     });
+    //   });
+    // }
+    // console.log(`Start time: ${startTimeMillis}`)
+    // console.log(`End time: ${endTimeMillis}`)
+    // let diff = (endTimeMillis - startTimeMillis)/(60*60*1000);
+    // console.log(`Difference: ${diff}`);
+    // console.log('Total steps:', totalSteps);
+    // res.json({ totalSteps });
   } catch (e) {
     console.error('Error:', e.message);
   }
+  
+  // try {
+  //   const response = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Authorization': 'Bearer ' + tokens.tokens.access_token,
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify({
+  //       aggregateBy: [
+  //         {
+  //           dataTypeName: 'com.google.step_count.delta',
+  //           dataSourceId: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps'
+  //         }
+  //       ],
+  //       bucketByTime: {
+  //         durationMillis: 24 * 60 * 60 * 1000
+  //       },
+  //       endTimeMillis: Date.now(),
+  //       startTimeMillis: Date.now() - 24 * 60 * 60 * 1000
+  //     })
+  //   });
+
+  //   if (!response.ok) {
+  //     const errorData = await response.json();
+  //     throw new Error(`Request failed with status ${response.status}: ${errorData.error.message}`);
+  //   }
+
+  //   const result = await response.json();
+  //   bucket = result.bucket;
+  //   // console.log(result);
+  // } catch (e) {
+  //   console.error('Error:', e.message);
+  // }
 
   try {
     for(const obj of bucket)
