@@ -57,18 +57,17 @@ app.get("/get-access", async (req, res, next) => {
   // res.send("hello chary");
   let bucket = [];
   try {
+    // Get the current date and time
     const now = new Date();
-    const istOffsetMillis = 5.5 * 60 * 60 * 1000;
-    const oneDayMillis = 24 * 60 * 60 * 1000;
-  
-    // Calculate midnight in IST for the current day
-    const midnightIST = new Date(now.getTime() + istOffsetMillis);
-    midnightIST.setUTCHours(0, 0, 0, 0);
-    const startTimeMillis = midnightIST.getTime() - istOffsetMillis;
-  
-    // Current time in milliseconds (already in IST)
+
+    // Set endTimeMillis to the current time
     const endTimeMillis = now.getTime();
-  
+
+    // Create a new Date object for the start of the current day (00:00)
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Set startTimeMillis to the start of the current day
+    const startTimeMillis = startOfDay.getTime();
     const response = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
       method: 'POST',
       headers: {
@@ -83,105 +82,78 @@ app.get("/get-access", async (req, res, next) => {
           }
         ],
         bucketByTime: {
-          durationMillis: oneDayMillis
+          durationMillis: 1 * 60 * 60 * 1000
         },
-        startTimeMillis: startTimeMillis,
-        endTimeMillis: endTimeMillis
+        endTimeMillis: endTimeMillis,
+        // endTimeMillis: Date.now(),
+        startTimeMillis: startTimeMillis
+        // startTimeMillis: Date.now() - 4 * 60 * 60 * 1000
       })
     });
-  
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Request failed with status ${response.status}: ${errorData.error.message}`);
-    }
-  
-    const result = await response.json();
-    bucket = result.bucket;
-  
-    // Parse and log the step count data
-    // let totalSteps = 0;
-    // if (bucket && bucket.length > 0) {
-    //   bucket.forEach(b => {
-    //     b.dataset.forEach(dataset => {
-    //       dataset.point.forEach(point => {
-    //         if (point.value && point.value.length > 0) {
-    //           totalSteps += point.value[0].intVal || 0;
-    //         }
-    //       });
-    //     });
-    //   });
-    // }
+
     // console.log(`Start time: ${startTimeMillis}`)
     // console.log(`End time: ${endTimeMillis}`)
     // let diff = (endTimeMillis - startTimeMillis)/(60*60*1000);
     // console.log(`Difference: ${diff}`);
-    // console.log('Total steps:', totalSteps);
-    // res.json({ totalSteps });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Request failed with status ${response.status}: ${errorData.error.message}`);
+    }
+
+    const result = await response.json();
+    bucket = result.bucket;
+    // console.log(result);
   } catch (e) {
     console.error('Error:', e.message);
   }
-  
-  // try {
-  //   const response = await fetch('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Authorization': 'Bearer ' + tokens.tokens.access_token,
-  //       'Content-Type': 'application/json'
-  //     },
-  //     body: JSON.stringify({
-  //       aggregateBy: [
-  //         {
-  //           dataTypeName: 'com.google.step_count.delta',
-  //           dataSourceId: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps'
-  //         }
-  //       ],
-  //       bucketByTime: {
-  //         durationMillis: 24 * 60 * 60 * 1000
-  //       },
-  //       endTimeMillis: Date.now(),
-  //       startTimeMillis: Date.now() - 24 * 60 * 60 * 1000
-  //     })
-  //   });
-
-  //   if (!response.ok) {
-  //     const errorData = await response.json();
-  //     throw new Error(`Request failed with status ${response.status}: ${errorData.error.message}`);
-  //   }
-
-  //   const result = await response.json();
-  //   bucket = result.bucket;
-  //   // console.log(result);
-  // } catch (e) {
-  //   console.error('Error:', e.message);
-  // }
 
   try {
-    for(const obj of bucket)
-      {
-        // console.log(obj.dataset);
-        for(const points of obj.dataset)
-          {
-            // console.log(points.point);
-            for(const values of points.point)
-              {
-                // console.log(values.value);
-                for(const stepsobj of values.value)
-                  {
-                    //This is the step count.
-                    let stepCount = stepsobj.intVal
-                    console.log(`Step_Count is : ${stepCount}`);
-                    if(stepCount >= 7500)
-                      {
-                        res.send(`Yes!! Congratulations.... You have completed your target for today with step count of ${stepCount}. You can try uptil 23:59 (today) if you did not reach your target. `)
-                      }
-                    else
-                    {
-                      res.send(`Your step count today is ${stepCount}. You can try uptil 23:59 (today) to reach your target.`)
-                    }
-                  }
-              }
-          }
-      }
+    // Parse and log the step count data
+    let totalSteps = 0;
+    if (bucket && bucket.length > 0) {
+      bucket.forEach(b => {
+        b.dataset.forEach(dataset => {
+          dataset.point.forEach(point => {
+            if (point.value && point.value.length > 0) {
+              // console.log(point.value[0].intVal);
+              totalSteps += point.value[0].intVal || 0;
+            }
+          });
+        });
+      });
+    }
+    
+    console.log('Total steps:', totalSteps);
+    return res.json({ totalSteps });
+    // for(const obj of bucket)
+    //   {
+    //     // console.log(obj.dataset);
+    //     for(const points of obj.dataset)
+    //       {
+    //         // console.log(points.point);
+    //         for(const values of points.point)
+    //           {
+    //             // console.log(values.value);
+    //             let stepCount = 0;
+    //             for(const stepsobj of values.value)
+    //               {
+    //                 //This is the step count.
+    //                 stepCount += stepsobj.intVal
+                    
+    //               }
+    //               console.log(`Step_Count is : ${stepCount}`);
+    //               if(stepCount >= 7500)
+    //                 {
+    //                   res.send(`Yes!! Congratulations.... You have completed your target for today with step count of ${stepCount}. You can try uptil 23:59 (today) if you did not reach your target. `)
+    //                 }
+    //               else
+    //               {
+    //                 res.send(`Your step count today is ${stepCount}. You can try uptil 23:59 (today) to reach your target.`)
+    //               }
+    //           }
+    //       }
+    //   }
   } catch (e) {
     console.log('error: ' ,e);
   }
